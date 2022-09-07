@@ -58,7 +58,8 @@ def render_hand(
     width: int,
     height: int,
     engine: Engine,
-    hand: List[Card]
+    hand: List[Card],
+    momentum: Tuple[int, List[card_suits.Suit]]
 ) -> None:
     hand_size = len(hand)
     console.draw_frame(
@@ -72,7 +73,10 @@ def render_hand(
     )
 
     console.print_box(x=x, y=y, width=width, height=1, alignment=tcod.CENTER, string="┤Hand├")
-    console.print(x=x+1, y=y+1, string=f"Hand: {len(hand)}")
+    console.print(x=x+1, y=y+1, string=f"Momentum: {momentum[0]}", fg=color.momentum)
+    for i, suit in enumerate(momentum[1]):
+        suit_char, suit_color = card_suits.suit_info[suit]
+        console.print(x=x+1+i, y=y+2, string=suit_char, fg=suit_color)
 
     if hand_size > 0:
         print_card = None
@@ -147,6 +151,11 @@ def render_viewport(
 ) -> None:
     console.draw_frame(x=x, y=y, width=width, height=height, clear=False, fg=(255,255,255), bg=(0,0,0))
 
+def get_highlight(engine: Engine, x: int, y: int, width: int, height: int) -> Tuple[int, int, int]:
+    if engine.mouse_in_rect(x=x, y=y, width=width, height=height):
+        return color.highlight
+    return color.white
+
 def render_deck_stats(
     console: Console,
     engine: Engine,
@@ -157,8 +166,10 @@ def render_deck_stats(
 ) -> None:
 
     console.draw_frame(x=x, y=y, width=width, height=height, clear=False, fg=(255,255,255), bg=(0,0,0))
-    console.print(x=x+1, y=y+1, string=f"Deck: {engine.player.deck.size}/{engine.player.deck.deck_size}")
-    console.print(x=x+1, y=y+2, string=f"Discard: {engine.player.discard.size}")
+    fg=get_highlight(engine=engine, x=x+1, y=y+1, width=width, height=1)
+    console.print(x=x+1, y=y+1, string=f"Deck: {engine.player.deck.size}/{engine.player.deck.deck_size}", fg=fg)
+    fg=get_highlight(engine=engine, x=x+1, y=y+2, width=width, height=1)
+    console.print(x=x+1, y=y+2, string=f"Discard: {engine.player.discard.size}", fg=fg)
 
 def render_status(
     console: Console,

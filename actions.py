@@ -36,7 +36,11 @@ class CardAction(Action):
         return self.engine.game_map.get_actor_at_location(*self.target_xy)
 
     def perform(self) -> None:
-        self.card.activate(self)
+        self.card.effect.activate(self)
+        momentum_val, momentum_suits = self.engine.momentum
+        if not any(suit in momentum_suits for suit in self.card.suits):
+            momentum_val -= 1
+        self.engine.momentum = (momentum_val, self.card.suits)
 
 class PickupAction(Action):
 

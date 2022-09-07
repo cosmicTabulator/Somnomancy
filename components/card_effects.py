@@ -10,6 +10,7 @@ from input_handler import (
 from actions import CardAction
 from entity import Card, Actor
 from components.base_component import BaseComponent
+from exceptions import Impossible
 
 class CardEffect(BaseComponent):
     parent: Card
@@ -20,6 +21,9 @@ class CardEffect(BaseComponent):
     def activate(self, action: CardAction) -> None:
         raise NotImplementedError()
 
+    def discard(self) -> None:
+        self.parent.move_to_zone(self.engine.player.discard)
+
 class MoveEffect(CardEffect):
     def __init__(self, move_distance: int):
         self.move_distance = move_distance
@@ -27,13 +31,13 @@ class MoveEffect(CardEffect):
     def get_action(self, user: Actor) -> SingleRangedAttackHandler:
         return SingleRangedAttackHandler(
             self.engine,
-            callback=lambda xy: CardAction(consumer, self.parent, xy)
+            callback=lambda xy: CardAction(self.engine.player, self.parent, xy)
         )
 
     def activate(self, action: CardAction) -> None:
         target_x, target_y = action.target_xy
-        dx = self.engine.player.x - target_x
-        dy = self.engine.player.y - target_y
+        dx = target_x - self.engine.player.x
+        dy = target_y - self.engine.player.y
         if not self.engine.game_map.visible[action.target_xy]:
             raise Impossible("You cannot move somewhere you cannot see!")
         if not self.engine.game_map.in_bounds(target_x, target_y):
@@ -46,3 +50,4 @@ class MoveEffect(CardEffect):
             raise Impossible("You cannot move that far.")
 
         self.engine.player.move(dx, dy)
+        self.discard()

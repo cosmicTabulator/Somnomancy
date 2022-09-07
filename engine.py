@@ -23,6 +23,7 @@ from render_functions import (
 if TYPE_CHECKING:
     from game_map import GameMap
     from entity import Actor
+    from card_suits import Suit
 
 class Engine:
 
@@ -37,12 +38,14 @@ class Engine:
     game_map: GameMap
     animations: List[Animation]
     card_highlighted = 0
+    momentum: Tuple[int, List[Suit]]
 
     def __init__(self, player: Actor):
         self.message_log = MessageLog()
         self.mouse_location = (0, 0)
         self.player = player
         self.animations = []
+        self.momentum = (2, [])
 
     def mouse_in_rect(self, x: int, y: int, width: int, height: int) -> bool:
         mouse_x, mouse_y = self.mouse_location
@@ -108,7 +111,8 @@ class Engine:
             width=self.hand_width,
             height=self.hand_height,
             engine=self,
-            hand=self.player.hand.cards)
+            hand=self.player.hand.cards,
+            momentum=self.momentum)
 
         render_deck_stats(
             console=console,

@@ -25,3 +25,4 @@ menu_title = (255, 255, 63)
 menu_text = white
 
 highlight = (255, 255, 0)
+momentum = (0xFF, 0x33, 0xFF)

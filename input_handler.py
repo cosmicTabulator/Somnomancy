@@ -335,6 +335,8 @@ class PlayCardEventHandler(AskUserEventHandler):
     def __init__(self, engine: Engine):
         super().__init__(engine)
         self.card_index=0
+        if self.engine.player.hand.size > 0:
+            self.engine.mouse_location = (self.engine.border_width + 1, self.engine.border_width + 3 + self.card_index)
 
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
         if self.engine.player.hand.size <= 0:
@@ -346,7 +348,7 @@ class PlayCardEventHandler(AskUserEventHandler):
         elif key == tcod.event.K_DOWN:
             self.card_index += 1
         elif key in CONFIRM_KEYS:
-            return on_card_selected()
+            return self.on_card_selected(self.engine.player.hand.cards[self.card_index])
         else:
             return super().ev_keydown(event)
 
@@ -354,21 +356,27 @@ class PlayCardEventHandler(AskUserEventHandler):
             self.card_index = self.engine.player.hand.size - 1
         if self.card_index >= self.engine.player.hand.size:
             self.card_index = 0
+
+        self.engine.mouse_location = (self.engine.border_width + 1, self.engine.border_width + 3 + self.card_index)
+
         return None
 
     def ev_mousebuttondown(self, event: tcod.event.MouseButtonDown) -> Optional[ActionOrHandler]:
-        pass
+        if 0<=event.tile.x<self.engine.console_width and 0<=event.tile.y<self.engine.console_height:
+            self.engine.mouse_location = event.tile.x, event.tile.y
+            if self.engine.mouse_in_rect(
+                x=self.engine.border_width+1,
+                y=self.engine.border_width+3,
+                width=self.engine.hand_width-2,
+                height=self.engine.player.hand.size
+            ):
+                self.card_index = self.engine.mouse_location[1] - (self.engine.border_width+3)
+                return self.on_card_selected(self.engine.player.hand.cards[self.card_index])
+            return super().ev_mousebuttondown(event)
+        return None
 
-    def on_render(self, console: tcod.Console) -> None:
-        super().on_render(console)
-        console.print(
-            x=self.engine.border_width+1,
-            y=self.engine.border_width+self.card_index+3,
-            string="►",
-            fg=color.highlight)
-
-    def on_card_selected(self) -> Optional[Action]:
-        pass
+    def on_card_selected(self, card: Card) -> Optional[Action]:
+        return card.effect.get_action(self.engine.player)
 
 
 class MainGameEventHandler(EventHandler):
@@ -399,6 +407,25 @@ class MainGameEventHandler(EventHandler):
             return PlayCardEventHandler(self.engine)
 
         return action
+
+
+    '''
+    Todo:
+    Cleanup this method
+    '''
+    def ev_mousebuttondown(self, event: tcod.event.MouseButtonDown) -> Optional[ActionOrHandler]:
+        if 0<=event.tile.x<self.engine.console_width and 0<=event.tile.y<self.engine.console_height:
+            self.engine.mouse_location = event.tile.x, event.tile.y
+            if self.engine.mouse_in_rect(
+                x=self.engine.border_width+1,
+                y=self.engine.border_width+3,
+                width=self.engine.hand_width-2,
+                height=self.engine.player.hand.size
+            ):
+                card_index = self.engine.mouse_location[1] - (self.engine.border_width+3)
+                return self.engine.player.hand.cards[card_index].effect.get_action(self.engine.player)
+            return super().ev_mousebuttondown(event)
+        return None
 
 
 class GameOverEventHandler(EventHandler):
