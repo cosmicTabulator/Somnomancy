@@ -17,3 +17,4 @@
 - Added ability to play cards from hand with mouse or keyboard
 - Started version numbering
 - Added momentum tracker
+- Added Strike card

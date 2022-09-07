@@ -109,6 +109,8 @@ class Actor(Entity):
             for zone in card_handler:
                 zone.parent = self
             self.deck, self.hand, self.discard = card_handler
+            self.deck.shuffle()
+            self.deck.draw_to_zone(zone=self.hand, number_of_cards=5)
 
     @property
     def is_alive(self) -> bool:
@@ -160,12 +162,15 @@ class Card(Entity):
         self.effect = effect
         self.effect.parent = self
         self.suits=suits
-        deck: Optional[Deck] = None
+        self.deck: Optional[Deck] = None
         self.parent = parent
 
     @property
     def gamemap(self) -> GameMap:
         return self.parent.gamemap
+
+    def duplicate(self) -> Card:
+        return copy.deepcopy(self)
 
     def return_to_deck(self) -> None:
         if self.deck:

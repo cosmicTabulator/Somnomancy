@@ -20,3 +20,6 @@ strike_card = Card(
     effect=card_effects.AttackEffect(attack_range=1, attack_damage=5),
     suits=[Suit.BLADES]
 )
+
+starter_deck = [sprint_card.duplicate() for i in range(5)]
+starter_deck.extend([strike_card.duplicate() for i in range(4)])

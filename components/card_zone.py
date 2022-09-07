@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 class CardZone(BaseComponent):
     parent: Actor
 
-    def __init__(self, cards: Optional[List[Card]]):
+    def __init__(self, cards: Optional[List[Card]] = None):
         self.cards: List[Card] = []
         if cards:
             self.add_cards(cards)
@@ -40,15 +40,15 @@ class CardZone(BaseComponent):
         return len(self.cards)
 
 class Deck(CardZone):
-
-    def __init__(self, cards: Optional[List[Card]]):
+    def __init__(self, cards: Optional[List[Card]] = None):
+        self.deck_size = 0
         super().__init__(cards)
-        self.deck_size = len(self.cards)
 
     def add_card(self, card: Card) -> None:
         super().add_card(card)
-        card.deck = self
-        self.deck_size += 1
+        if card.deck != self:
+            card.deck = self
+            self.deck_size += 1
 
     def remove_card(self, card: Card) -> None:
         try:

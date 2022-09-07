@@ -15,9 +15,9 @@ player = Actor(
     fighter=Fighter(hp=30, defense=2, power=5),
     inventory=Inventory(capacity=26),
     card_handler=(
-        Deck(None),
-        CardZone([copy.deepcopy(cards_factory.sprint_card), copy.deepcopy(cards_factory.sprint_card), copy.deepcopy(cards_factory.strike_card)]),
-        CardZone(None))
+        Deck(cards_factory.starter_deck),
+        CardZone(),
+        CardZone())
     )
 
 orc = Actor(
