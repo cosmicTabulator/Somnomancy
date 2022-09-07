@@ -18,3 +18,4 @@
 - Started version numbering
 - Added momentum tracker
 - Added Strike card
+- Added discard, shuffle and redraw on wait

@@ -96,6 +96,9 @@ class WaitAction(Action):
         self.entity.deck.add_cards(self.entity.hand.cards)
         self.entity.deck.shuffle()
         self.entity.deck.draw_to_zone(zone=self.entity.hand, number_of_cards=5)
+        momentum_val, momentum_suits = self.engine.momentum
+        momentum_val = self.engine.momentum_max
+        self.engine.momentum = (momentum_val, momentum_suits)
 
 class AttackWithDirection(Action):
     def __init__(self, entity: Actor, dx: int, dy: int):

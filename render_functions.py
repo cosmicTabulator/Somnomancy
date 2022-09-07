@@ -73,7 +73,7 @@ def render_hand(
     )
 
     console.print_box(x=x, y=y, width=width, height=1, alignment=tcod.CENTER, string="┤Hand├")
-    console.print(x=x+1, y=y+1, string=f"Momentum: {momentum[0]}", fg=color.momentum)
+    console.print(x=x+1, y=y+1, string=f"Momentum: {momentum[0]}/{engine.momentum_max}", fg=color.momentum)
     for i, suit in enumerate(momentum[1]):
         suit_char, suit_color = card_suits.suit_info[suit]
         console.print(x=x+1+i, y=y+2, string=suit_char, fg=suit_color)

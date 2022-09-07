@@ -39,6 +39,7 @@ class Engine:
     animations: List[Animation]
     card_highlighted = 0
     momentum: Tuple[int, List[Suit]]
+    momentum_max = 2
 
     def __init__(self, player: Actor):
         self.message_log = MessageLog()
