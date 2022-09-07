@@ -98,7 +98,7 @@ def render_hand(
             y_offset = 2
             if y+print_card+3 > 25:
                 y_offset = -2-height
-            render_card(console=console, card=hand[i], x=engine.mouse_location[0]+2, y=engine.mouse_location[1]+y_offset, width=12, height=15)
+            render_card(console=console, card=hand[print_card], x=engine.mouse_location[0]+2, y=engine.mouse_location[1]+y_offset, width=12, height=15)
     else:
         console.print(x+1, y+1, "(Empty)")
 

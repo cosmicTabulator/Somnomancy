@@ -10,7 +10,7 @@
 - Implemented map scrolling
 - Implemented animation framework
 
-## v0.2.0 (Sept 7, 2022)
+## v0.2.0
 - Added executable icon
 - Added .gitignore
 - Reworked parent attribute for Card objects

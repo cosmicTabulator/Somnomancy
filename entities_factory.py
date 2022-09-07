@@ -16,7 +16,7 @@ player = Actor(
     inventory=Inventory(capacity=26),
     card_handler=(
         Deck(None),
-        CardZone([copy.deepcopy(cards_factory.sprint_card), copy.deepcopy(cards_factory.sprint_card), copy.deepcopy(cards_factory.sprint_card)]),
+        CardZone([copy.deepcopy(cards_factory.sprint_card), copy.deepcopy(cards_factory.sprint_card), copy.deepcopy(cards_factory.strike_card)]),
         CardZone(None))
     )
 
