@@ -1,6 +1,6 @@
-#Changelog
+# Changelog
 
-##v0.1 (Sept 6, 2022)
+## v0.1 (Sept 6, 2022)
 - Updated rendering to new layout
 - Fixed input handler issues with new layout
 - Added Card entity and CardZone components
