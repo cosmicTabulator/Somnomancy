@@ -16,21 +16,22 @@ class CardZone(BaseComponent):
     def __init__(self, cards: Optional[List[Card]]):
         self.cards: List[Card] = []
         if cards:
-            self.cards = cards
+            self.add_cards(cards)
 
     def add_card(self, card: Card) -> None:
         self.cards.append(card)
-        card.zone.remove_card(card)
-        card.zone = self
+        if card.parent:
+            card.parent.remove_card(card)
+        card.parent = self
 
     def add_cards(self, cards: List[Card]) -> None:
         for card in cards:
-            add_card(card)
+            self.add_card(card)
 
     def remove_card(self, card: Card) -> None:
         try:
             self.cards.remove(card)
-            card.zone = None
+            card.parent = None
         except ValueError:
             raise Impossible(f"{card.name} is not in this zone.")
 

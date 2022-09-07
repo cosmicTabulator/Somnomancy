@@ -20,7 +20,7 @@ T = TypeVar("T", bound="Entity")
 
 class Entity:
 
-    parent: Union[GameMap, Inventory]
+    parent: Union[GameMap, Inventory, CardZone]
 
     def __init__(
         self,
@@ -106,6 +106,8 @@ class Actor(Entity):
         self.inventory.parent = self
 
         if card_handler:
+            for zone in card_handler:
+                zone.parent = self
             self.deck, self.hand, self.discard = card_handler
 
     @property
@@ -145,7 +147,8 @@ class Card(Entity):
         name: str = "<Unnamed>",
         text: str = "<None>",
         effect: CardEffect,
-        suits: List[Suit]
+        suits: List[Suit],
+        parent: Optional[CardZone] = None
     ):
         super().__init__(
             char=char,
@@ -158,7 +161,11 @@ class Card(Entity):
         self.effect.parent = self
         self.suits=suits
         deck: Optional[Deck] = None
-        zone: Optional[CardZone] = None
+        self.parent = parent
+
+    @property
+    def gamemap(self) -> GameMap:
+        return self.parent.gamemap
 
     def return_to_deck(self) -> None:
         if self.deck:
@@ -170,7 +177,4 @@ class Card(Entity):
         self.deck = deck
 
     def move_to_zone(self, zone: CardZone) -> None:
-        if self.zone:
-            self.zone.cards.remove(self)
-        self.zone = zone
         zone.add_card(self)

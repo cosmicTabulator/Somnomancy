@@ -9,32 +9,9 @@ import setup_game
 
 '''
 by cosmicTabulator
-September 6, 2022
-
-v0.1
--Updated rendering to new layout
--Fixed input handler issues with new layout
--Added Card entity and CardZone components
--Changed tileset to Unknown_curses_12x12.png (DwarfFortress tile repository, author unknown)
--Reorganized asset structure
--Added card suits (Wings, Blades, Flames, Eyes, Candles, Walls, Doors, Storms, Songs)
--Implemented map scrolling
--Implemented animation framework
-
-TODO:
--Display card suit in hand window
--Deck and Discard viewing
--Play cards with mouse or keyboard
-    -Consistent card highlighting between mouse and keyboard
--Framerate montoring
-
-Future Plans
--Minimap
--Start in dungeon, battle to surface world
--Redo level generator
--Change menu background
-
 '''
+
+VERSION = "v0.2.0"
 
 def save_game(handler: input_handler.BaseEventHandler, filename: str) -> None:
     if isinstance(handler, input_handler.EventHandler):
