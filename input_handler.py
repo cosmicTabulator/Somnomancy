@@ -18,7 +18,7 @@ import exceptions
 
 if TYPE_CHECKING:
     from engine import Engine
-    from entity import Item
+    from entity import Item, Card
 
 MOVE_KEYS = {
     #Arrows
@@ -67,6 +67,16 @@ Handler returns switch the active event handler
 Action returns are attempted and if valid, switch to MainGameEventHandler
 """
 
+def update_mouse(event: Union[tcod.event.MouseMotion, tcod.event.MouseButtonDown], engine: Engine) -> bool:
+    """
+    returns False if mouse is outside console
+    """
+    if 0<=event.tile.x<self.engine.console_width and 0<=event.tile.y<self.engine.console_height:
+        self.engine.mouse_location = event.tile.x, event.tile.y
+        return True
+    return False
+
+
 class BaseEventHandler(tcod.event.EventDispatch[ActionOrHandler]):
     def handle_events(self, event: tcod.event.Event) -> BaseEventHandler:
         state = self.dispatch(event)
@@ -104,6 +114,46 @@ class PopupMessage(BaseEventHandler):
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[BaseEventHandler]:
         return self.parent
 
+class PopupCardList(BaseEventHandler):
+    def __init__(self, parent_handler: BaseEventHandler, card_list: List[Card], title: str):
+        self.parent = parent
+        self.card_list = card_list
+        self.title = title
+        self.width = 20
+        self.height = 40
+
+    def on_render(selfm console: tcod.Console) -> None:
+        self.parent.on_render(console)
+        console.tiles_rgb["fg"] //= 8
+        console.tiles_rgb["bg"] //= 8
+
+        card_count = len(card_list)
+
+        console.draw_frame(
+            x = (console.width//2) - (self.width//2),
+            y = (console.height//2) - (self.height//2),
+            width = self.width,
+            height = self.height,
+            clear=True)
+
+        console.print_box(
+            x = (console.width//2) - (self.width//2),
+            y = (console.height//2) - (self.height//2),
+            width = self.width,
+            height = 1,
+            string = f"┤{self.name}├",
+            alignment = tcod.CENTER
+        )
+
+        for i, card in enumerate(self.card_list):
+            #Add card highlighting and mouseover
+            console.print_box(
+                x = (console.width//2) - (self.width//2) + 2,
+                y = (console.height//2) - (self.height//2) + 1 + i,
+                width = self.width - 3,
+                height = 1,
+                string = card.name
+            )
 
 class EventHandler(BaseEventHandler):
     def __init__(self, engine: Engine):
@@ -412,16 +462,27 @@ class MainGameEventHandler(EventHandler):
     Cleanup this method
     '''
     def ev_mousebuttondown(self, event: tcod.event.MouseButtonDown) -> Optional[ActionOrHandler]:
-        if 0<=event.tile.x<self.engine.console_width and 0<=event.tile.y<self.engine.console_height:
-            self.engine.mouse_location = event.tile.x, event.tile.y
+        if update_mouse(event=event, engine=engine):
             if self.engine.mouse_in_rect(
-                x=self.engine.border_width+1,
-                y=self.engine.border_width+3,
+                x=self.engine.hand_x+1,
+                y=self.engine.hand_y+3,
                 width=self.engine.hand_width-2,
                 height=self.engine.player.hand.size
             ):
-                card_index = self.engine.mouse_location[1] - (self.engine.border_width+3)
+                card_index = self.engine.mouse_location[1] - (self.engine.hand_y+3)
                 return self.engine.player.hand.cards[card_index].effect.get_action(self.engine.player)
+            elif self.engine.mouse_in_rect(
+                x=self.engine.deck_stats_x+1,
+                y=self.engine.deck_stats_y+1,
+                width=self.engine.deck_stats_width-2,
+                height=self.engine.deck_stats_height-2
+            ):
+                index = self.engine.mouse_location[1] - (self.engine.deck_stats_y-1)
+                if index == 0:
+                    #Shows player deck order
+                    return PopupCardList(console=console, title="Deck", card_list=self.engine.player.deck.cards)
+                elif index == 1:
+                    return PopupCardList(console=console, title="Discard", card_list=self.engine.player.discard.cards)
             return super().ev_mousebuttondown(event)
         return None
 

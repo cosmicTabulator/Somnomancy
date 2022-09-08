@@ -27,13 +27,16 @@ if TYPE_CHECKING:
 
 class Engine:
 
+    border_width = 2
     console_width, console_height = 80, 50
     hand_width, hand_height = 20, 40
+    hand_x, hand_y = border_width, border_width
     deck_stats_width, deck_stats_height = 20, 4
-    border_width = 2
+    deck_stats_x, deck_stats_y = border_width, border_width+hand_height+hand_y
     viewport_width, viewport_height = 40, 40
-    viewport_x, viewport_y = 2*border_width+hand_width, border_width
+    viewport_x, viewport_y = border_width+hand_width+hand_x, border_width
     status_width, status_height = 12, 40
+    status_x, status_y = border_width+viewport_width+viewport_x, border_width
     message_log_width, message_log_height = viewport_width, 4
     game_map: GameMap
     animations: List[Animation]
@@ -107,8 +110,8 @@ class Engine:
 
         render_hand(
             console=console,
-            x=self.border_width,
-            y=self.border_width,
+            x=self.hand_x,
+            y=self.hand_y,
             width=self.hand_width,
             height=self.hand_height,
             engine=self,
@@ -118,16 +121,16 @@ class Engine:
         render_deck_stats(
             console=console,
             engine=self,
-            x=self.border_width,
-            y=2*self.border_width+self.hand_height,
+            x=self.deck_stats_x,
+            y=self.deck_stats_y,
             width=self.deck_stats_width,
             height=self.deck_stats_height)
 
         render_status(
             console=console,
             engine=self,
-            x=3*self.border_width+self.hand_width+self.viewport_width,
-            y=self.border_width,
+            x=self.status_x,
+            y=self.status_y,
             width=self.status_width,
             height = self.status_height
         )
