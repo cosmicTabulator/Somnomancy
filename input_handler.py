@@ -71,8 +71,8 @@ def update_mouse(event: Union[tcod.event.MouseMotion, tcod.event.MouseButtonDown
     """
     returns False if mouse is outside console
     """
-    if 0<=event.tile.x<self.engine.console_width and 0<=event.tile.y<self.engine.console_height:
-        self.engine.mouse_location = event.tile.x, event.tile.y
+    if 0<=event.tile.x<engine.console_width and 0<=event.tile.y<engine.console_height:
+        engine.mouse_location = event.tile.x, event.tile.y
         return True
     return False
 
@@ -116,24 +116,26 @@ class PopupMessage(BaseEventHandler):
 
 class PopupCardList(BaseEventHandler):
     def __init__(self, parent_handler: BaseEventHandler, card_list: List[Card], title: str):
-        self.parent = parent
+        self.parent = parent_handler
         self.card_list = card_list
         self.title = title
         self.width = 20
         self.height = 40
 
-    def on_render(selfm console: tcod.Console) -> None:
+    def on_render(self, console: tcod.Console) -> None:
         self.parent.on_render(console)
         console.tiles_rgb["fg"] //= 8
         console.tiles_rgb["bg"] //= 8
 
-        card_count = len(card_list)
+        card_count = len(self.card_list)
 
         console.draw_frame(
             x = (console.width//2) - (self.width//2),
             y = (console.height//2) - (self.height//2),
             width = self.width,
             height = self.height,
+            fg=color.white,
+            bg=color.black,
             clear=True)
 
         console.print_box(
@@ -141,8 +143,10 @@ class PopupCardList(BaseEventHandler):
             y = (console.height//2) - (self.height//2),
             width = self.width,
             height = 1,
-            string = f"┤{self.name}├",
-            alignment = tcod.CENTER
+            string = f"┤{self.title}├",
+            alignment = tcod.CENTER,
+            fg=color.white,
+            bg=color.black
         )
 
         for i, card in enumerate(self.card_list):
@@ -152,8 +156,13 @@ class PopupCardList(BaseEventHandler):
                 y = (console.height//2) - (self.height//2) + 1 + i,
                 width = self.width - 3,
                 height = 1,
-                string = card.name
+                string = card.name,
+                fg=color.white,
+                bg=color.black
             )
+
+    def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[BaseEventHandler]:
+        return self.parent
 
 class EventHandler(BaseEventHandler):
     def __init__(self, engine: Engine):
@@ -462,7 +471,7 @@ class MainGameEventHandler(EventHandler):
     Cleanup this method
     '''
     def ev_mousebuttondown(self, event: tcod.event.MouseButtonDown) -> Optional[ActionOrHandler]:
-        if update_mouse(event=event, engine=engine):
+        if update_mouse(event=event, engine=self.engine):
             if self.engine.mouse_in_rect(
                 x=self.engine.hand_x+1,
                 y=self.engine.hand_y+3,
@@ -477,12 +486,12 @@ class MainGameEventHandler(EventHandler):
                 width=self.engine.deck_stats_width-2,
                 height=self.engine.deck_stats_height-2
             ):
-                index = self.engine.mouse_location[1] - (self.engine.deck_stats_y-1)
+                index = self.engine.mouse_location[1] - (self.engine.deck_stats_y+1)
                 if index == 0:
                     #Shows player deck order
-                    return PopupCardList(console=console, title="Deck", card_list=self.engine.player.deck.cards)
+                    return PopupCardList(parent_handler=self, title="Deck", card_list=self.engine.player.deck.cards)
                 elif index == 1:
-                    return PopupCardList(console=console, title="Discard", card_list=self.engine.player.discard.cards)
+                    return PopupCardList(parent_handler=self, title="Discard", card_list=self.engine.player.discard.cards)
             return super().ev_mousebuttondown(event)
         return None
 

@@ -1,5 +1,5 @@
 # Next Release - v0.1.0
-- [ ] Deck and Discard viewing
+- [x] Deck and Discard viewing
 - [x] Play cards with mouse or keyboard
 - [x] Consistent card highlighting between mouse and keyboard
 - [ ] Framerate monitoring
