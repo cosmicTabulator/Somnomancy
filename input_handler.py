@@ -11,7 +11,7 @@ from actions import (
     Action,
     BumpAction,
     PickupAction,
-    WaitAction
+    PassTurn
 )
 import color
 import exceptions
@@ -131,8 +131,6 @@ class EventHandler(BaseEventHandler):
         except exceptions.Impossible as exc:
             self.engine.message_log.add_message(exc.args[0], color.impossible)
             return False
-
-        self.engine.handle_enemy_turns()
 
         self.engine.update_fov()
         return True
@@ -390,7 +388,7 @@ class MainGameEventHandler(EventHandler):
             dx, dy = MOVE_KEYS[key]
             action = BumpAction(player, dx, dy)
         elif key in WAIT_KEYS:
-            action = WaitAction(player)
+            action = PassTurn(player)
         elif key == tcod.event.K_ESCAPE:
             raise SystemExit()
         elif key == tcod.event.K_v:

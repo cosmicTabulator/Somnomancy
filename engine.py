@@ -39,14 +39,14 @@ class Engine:
     animations: List[Animation]
     card_highlighted = 0
     momentum: Tuple[int, List[Suit]]
-    momentum_max = 2
+    momentum_max = 1
 
     def __init__(self, player: Actor):
         self.message_log = MessageLog()
         self.mouse_location = (0, 0)
         self.player = player
         self.animations = []
-        self.momentum = (2, [])
+        self.momentum = (self.momentum_max, [])
 
     def mouse_in_rect(self, x: int, y: int, width: int, height: int) -> bool:
         mouse_x, mouse_y = self.mouse_location

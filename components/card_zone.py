@@ -40,9 +40,13 @@ class CardZone(BaseComponent):
         return len(self.cards)
 
 class Deck(CardZone):
+    discard: Optional[CardZone] = None
     def __init__(self, cards: Optional[List[Card]] = None):
         self.deck_size = 0
         super().__init__(cards)
+
+    def link_discard(self, discard: CardZone) -> None:
+        self.discard = discard
 
     def add_card(self, card: Card) -> None:
         super().add_card(card)
@@ -68,9 +72,17 @@ class Deck(CardZone):
 
     def draw_to_zone(self,  zone: CardZone, number_of_cards: int = 1) -> List[Card]:
         cards_drawn: List[Card] = []
-        number_of_cards = min(len(self.cards), number_of_cards)
-        for i in range(number_of_cards):
-            cards_drawn.append(self.cards.pop())
+        if number_of_cards > self.size:
+            first_draw = self.size
+            self.draw_to_zone(zone, first_draw)
+            if discard:
+                self.add_cards(self.discard.cards)
+                self.shuffle()
+                second_draw = min(number_of_cards - first_draw, self.size)
+                self.draw_to_zone(zone, second_draw)
+        else:
+            for i in range(number_of_cards):
+                cards_drawn.append(self.cards.pop())
         zone.add_cards(cards_drawn)
         return cards_drawn
 

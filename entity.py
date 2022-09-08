@@ -109,6 +109,7 @@ class Actor(Entity):
             for zone in card_handler:
                 zone.parent = self
             self.deck, self.hand, self.discard = card_handler
+            self.deck.link_discard(self.discard)
             self.deck.shuffle()
             self.deck.draw_to_zone(zone=self.hand, number_of_cards=5)
 
