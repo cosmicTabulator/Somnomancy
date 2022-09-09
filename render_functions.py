@@ -68,8 +68,8 @@ def render_hand(
         width=width,
         height=height,
         clear=True,
-        fg=(255, 255, 255),
-        bg=(0,0,0)
+        fg=color.teal,
+        bg=color.black
     )
 
     console.print_box(x=x, y=y, width=width, height=1, alignment=tcod.CENTER, string="┤Hand├")
@@ -149,7 +149,7 @@ def render_viewport(
     width: int,
     height: int
 ) -> None:
-    console.draw_frame(x=x, y=y, width=width, height=height, clear=False, fg=(255,255,255), bg=(0,0,0))
+    console.draw_frame(x=x, y=y, width=width, height=height, clear=False, fg=color.teal, bg=color.black, decoration="∙═∙║ ║∙═∙")
 
 def get_highlight(engine: Engine, x: int, y: int, width: int, height: int) -> Tuple[int, int, int]:
     if engine.mouse_in_rect(x=x, y=y, width=width, height=height):
@@ -165,7 +165,7 @@ def render_deck_stats(
     height: int
 ) -> None:
 
-    console.draw_frame(x=x, y=y, width=width, height=height, clear=False, fg=(255,255,255), bg=(0,0,0))
+    console.draw_frame(x=x, y=y, width=width, height=height, clear=False, fg=color.teal, bg=color.black)
     fg=get_highlight(engine=engine, x=x+1, y=y+1, width=width, height=1)
     console.print(x=x+1, y=y+1, string=f"Deck: {engine.player.deck.size}/{engine.player.deck.deck_size}", fg=fg)
     fg=get_highlight(engine=engine, x=x+1, y=y+2, width=width, height=1)
@@ -179,7 +179,7 @@ def render_status(
     width: int,
     height: int
 ) -> None:
-    console.draw_frame(x=x, y=y, width=width, height=height, clear=False, fg=(255,255,255), bg=(0,0,0))
+    console.draw_frame(x=x, y=y, width=width, height=height, clear=False, fg=color.teal, bg=color.black)
     render_bar(
         console=console,
         current_value=engine.player.fighter.hp,

@@ -17,6 +17,7 @@
 - [ ] Display card suit in hand window
 - [ ] More cards
 - [ ] More enemies
+- [ ] Artifacts System
 
 # Future Plans
 - [ ] Minimap
