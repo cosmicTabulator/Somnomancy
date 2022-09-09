@@ -75,7 +75,7 @@ class Deck(CardZone):
         if number_of_cards > self.size:
             first_draw = self.size
             self.draw_to_zone(zone, first_draw)
-            if discard:
+            if self.discard:
                 self.add_cards(self.discard.cards)
                 self.shuffle()
                 second_draw = min(number_of_cards - first_draw, self.size)

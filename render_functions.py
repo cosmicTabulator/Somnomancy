@@ -30,12 +30,12 @@ def render_bar(
 ) -> None:
     bar_width = int(float(current_value) / maximum_value * total_width)
 
-    console.draw_rect(x=x, y=y, width=total_width, height=1, ch=1, bg=color.bar_empty)
+    console.draw_rect(x=x, y=y+1, width=total_width, height=1, ch=1, bg=color.bar_empty)
 
     if bar_width > 0:
-        console.draw_rect(x=x, y=y, width=bar_width, height=1, ch=1, bg=color.bar_filled)
+        console.draw_rect(x=x, y=y+1, width=bar_width, height=1, ch=1, bg=color.bar_filled)
 
-    console.print(x=x+1, y=y, string=string+f": {current_value}/{maximum_value}", fg=color.bar_text)
+    console.print(x=x, y=y, string=string+f": {current_value}/{maximum_value}", fg=color.bar_text)
 
 def render_names_at_mouse_location(
     console: Console,
