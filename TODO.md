@@ -19,6 +19,11 @@
 - [ ] More enemies
 - [ ] Artifacts System
 
+# v1.0
+- [ ] Overworld
+- [ ] Shops
+- [ ] World Map
+
 # Future Plans
 - [ ] Minimap
 - [ ] Start in dungeon, battle to surface world
