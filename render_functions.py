@@ -149,7 +149,7 @@ def render_viewport(
     width: int,
     height: int
 ) -> None:
-    console.draw_frame(x=x, y=y, width=width, height=height, clear=False, fg=color.teal, bg=color.black, decoration="∙═∙║ ║∙═∙")
+    console.draw_frame(x=x, y=y, width=width, height=height, clear=False, fg=color.cyan, bg=color.black, decoration="∙═∙║ ║∙═∙")
 
 def get_highlight(engine: Engine, x: int, y: int, width: int, height: int) -> Tuple[int, int, int]:
     if engine.mouse_in_rect(x=x, y=y, width=width, height=height):
