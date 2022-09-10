@@ -167,9 +167,9 @@ def render_deck_stats(
 
     console.draw_frame(x=x, y=y, width=width, height=height, clear=False, fg=color.teal, bg=color.black)
     fg=get_highlight(engine=engine, x=x+1, y=y+1, width=width, height=1)
-    console.print(x=x+1, y=y+1, string=f"Deck: {engine.player.deck.size}/{engine.player.deck.deck_size}", fg=fg)
+    console.print(x=x+1, y=y+1, string=f"(z) Deck: {engine.player.deck.size}/{engine.player.deck.deck_size}", fg=fg)
     fg=get_highlight(engine=engine, x=x+1, y=y+2, width=width, height=1)
-    console.print(x=x+1, y=y+2, string=f"Discard: {engine.player.discard.size}", fg=fg)
+    console.print(x=x+1, y=y+2, string=f"(x) Discard: {engine.player.discard.size}", fg=fg)
 
 def render_status(
     console: Console,

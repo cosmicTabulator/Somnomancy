@@ -460,8 +460,12 @@ class MainGameEventHandler(EventHandler):
             return InventoryDropHandler(self.engine)
         elif key == tcod.event.K_SLASH:
             return LookHandler(self.engine)
-        elif key == tcod.event.K_c:
+        elif key == tcod.event.K_p:
             return PlayCardEventHandler(self.engine)
+        elif key == tcod.event.K_z:
+            return PopupCardList(parent_handler=self, title="Deck", card_list=self.engine.player.deck.cards)
+        elif key == tcod.event.K_x:
+            return PopupCardList(parent_handler=self, title="Discard", card_list=self.engine.player.discard.cards)
 
         return action
 
