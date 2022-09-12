@@ -19,7 +19,7 @@ class BaseAI(Action):
     def perform(self) -> None:
         raise NotImplementedError()
 
-    def get_attack(self) -> AttackPattern:
+    def get_attack(self) -> Optional[AttackPattern]:
         raise NotImplementedError()
 
     def get_path_to(self, dest_x: int, dest_y: int) -> List[Tuple[int, int]]:
@@ -70,6 +70,10 @@ class ConfusedEnemy(BaseAI):
             self.turns_remaining -= 1
             return BumpAction(self.entity, direction_x, direction_y).perform()
 
+    def get_attack(self) -> Optional[AttackPattern]:
+        return None
+
+        
 class HostileEnemy(BaseAI):
     def __init__(self, entity: Actor):
         super().__init__(entity)
@@ -92,6 +96,9 @@ class HostileEnemy(BaseAI):
             return MoveAction(self.entity, dest_x - self.entity.x, dest_y - self.entity.y).perform()
 
         return WaitAction(self.entity).perform()
+
+    def get_attack(self) -> Optional[AttackPattern]:
+        return None
 
 class BansheeAI(BaseAI):
     def __init__(self, entity: Actor, move_speed: int, attack_radius: int):
