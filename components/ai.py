@@ -73,7 +73,7 @@ class ConfusedEnemy(BaseAI):
     def get_attack(self) -> Optional[AttackPattern]:
         return None
 
-        
+
 class HostileEnemy(BaseAI):
     def __init__(self, entity: Actor):
         super().__init__(entity)
@@ -101,7 +101,7 @@ class HostileEnemy(BaseAI):
         return None
 
 class BansheeAI(BaseAI):
-    def __init__(self, entity: Actor, move_speed: int, attack_radius: int):
+    def __init__(self, entity: Actor, move_speed: int=3, attack_radius: int=1):
         super().__init__(entity)
         self.path: List[Tuple[int, int]] = []
         self.move_speed = move_speed
@@ -110,21 +110,23 @@ class BansheeAI(BaseAI):
     def perform(self) -> None:
         if self.engine.game_map.visible[self.entity.x, self.entity.y]:
 
-            for tile in self.get_attack().get_tile_list:
+            for tile in self.get_attack().get_tile_list():
                 target = self.engine.game_map.get_actor_at_location(*tile)
                 if target:
-                    dx, dy = target.x - self.x, target.y - self.y
+                    dx, dy = target.x - self.entity.x, target.y - self.entity.y
                     MeleeAction(self.entity, dx, dy).perform()
 
             target = self.engine.player
 
             self.path = self.get_path_to(target.x, target.y)
+            self.path = self.path[:-1]
 
-            if self.path:
-                move_distance = min(self.move_speed, len(self.path))
-                dest_x, dest_y = self.path.pop(move_distance-1)
-                return MoveAction(self.entity, dest_x - self.entity.x, dest_y - self.entity.y).perform()
+        if self.path:
+            move_distance = min(self.move_speed, len(self.path))
+            for i in range(move_distance):
+                dest_x, dest_y = self.path.pop(0)
+            return MoveAction(self.entity, dest_x - self.entity.x, dest_y - self.entity.y).perform()
 
 
     def get_attack(self) -> AttackPattern:
-        return AdjacentAttack(x=self.x, y=self.y, radius=self.attack_radius, gamemap=self.engine.game_map)
+        return AdjacentAttack(x=self.entity.x, y=self.entity.y, radius=self.attack_radius, gamemap=self.engine.game_map)

@@ -7,6 +7,7 @@ from tcod.console import Console
 
 from entity import Actor, Item
 import tile_types
+import icons
 
 if TYPE_CHECKING:
     from engine import Engine
@@ -97,6 +98,21 @@ class GameMap:
         entities_sorted_for_rendering = sorted(self.entities, key=lambda x: x.render_order.value)
 
         shift_x, shift_y = self.get_map_shift(width=width, height=height)
+
+        for actor in self.actors:
+            attack_pattern = actor.ai.get_attack()
+            if attack_pattern and self.visible[actor.x, actor.y]:
+                for tile in attack_pattern.get_tile_list():
+                    tile_x, tile_y = tile
+                    if self.explored[tile_x, tile_y] and self.tiles[tile_x, tile_y]["transparent"]:
+                        console.print(
+                            x=x+tile_x-shift_x,
+                            y=y+tile_y-shift_y,
+                            string=icons.attack_indicator[0],
+                            fg=icons.attack_indicator[1]
+                        )
+
+
         for entity in entities_sorted_for_rendering:
             if self.visible[entity.x, entity.y]:
                 console.print(x=x+entity.x-shift_x, y=y+entity.y-shift_y, string=entity.char, fg=entity.color)

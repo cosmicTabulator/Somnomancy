@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import List, Tuple, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -22,8 +24,8 @@ class AdjacentAttack(AttackPattern):
     def __init__(self, x: int, y: int, radius: int, gamemap: GameMap):
         self.x = x
         self.y = y
-        self.tile_list = [(self.x+i, self.y+j) for i, j in range(-radius, radius+1)]
-        self.tile_list.pop((self.x, self.y))
+        self.tile_list = [(self.x+i, self.y+j) for i in range(-radius, radius+1) for j in range(-radius, radius+1)]
+        self.tile_list.remove((self.x, self.y))
 
 class RayAttack(AttackPattern):
     MAX_DISTANCE = 10

@@ -1,4 +1,4 @@
-from components.ai import HostileEnemy
+from components.ai import HostileEnemy, BansheeAI
 from components import consumable
 from components.fighter import Fighter
 from components.inventory import Inventory
@@ -24,7 +24,7 @@ orc = Actor(
     char="o",
     color=(63,127,63),
     name="Orc",
-    ai_cls=HostileEnemy,
+    ai_cls=BansheeAI,
     fighter=Fighter(hp=10, defense=0, power=3),
     inventory=Inventory(capacity=0)
     )
