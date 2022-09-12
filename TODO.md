@@ -10,7 +10,7 @@
 - [ ] Add multiple floor generation
 - [ ] Rework floor generation
 - [x] Rework turn structure
-- [ ] Enemies broadcast their next action
+- [x] Enemies broadcast their next action
 
 # v0.2.0
 - [ ] Card use animations

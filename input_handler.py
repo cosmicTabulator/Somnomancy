@@ -13,6 +13,7 @@ from actions import (
     PickupAction,
     PassTurn
 )
+from render_functions import render_card
 import color
 import exceptions
 
@@ -149,17 +150,36 @@ class PopupCardList(BaseEventHandler):
             bg=color.black
         )
 
+        mouseover: Optional[Card] = None
+
         for i, card in enumerate(self.card_list):
-            #Add card highlighting and mouseover
+            if self.parent.engine.mouse_in_rect(
+                x=(console.width//2) - (self.width//2) + 2,
+                y=(console.height//2) - (self.height//2) + 1 + i,
+                width = self.width-3,
+                height=1):
+                mouseover = card
+                draw_color = color.highlight
+            else:
+                draw_color = color.white
             console.print_box(
                 x = (console.width//2) - (self.width//2) + 2,
                 y = (console.height//2) - (self.height//2) + 1 + i,
                 width = self.width - 3,
                 height = 1,
                 string = card.name,
-                fg=color.white,
+                fg=draw_color,
                 bg=color.black
             )
+        if mouseover:
+            y_offset = 2
+            if ((console.height//2) - (self.height//2))+self.parent.engine.mouse_location[1]+3 > 25:
+                y_offset = -2-height
+            render_card(console=console, card=mouseover, x=self.parent.engine.mouse_location[0]+2, y=self.parent.engine.mouse_location[1]+2+y_offset, width=12, height=15)
+
+    def ev_mousemotion(self, event: tcod.event.MouseMotion) -> None:
+        if 0<=event.tile.x<self.parent.engine.console_width and 0<=event.tile.y<self.parent.engine.console_height:
+            self.parent.engine.mouse_location = event.tile.x, event.tile.y
 
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[BaseEventHandler]:
         return self.parent
