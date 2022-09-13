@@ -3,6 +3,7 @@ from components import consumable
 from components.fighter import Fighter
 from components.inventory import Inventory
 from components.card_zone import CardZone, Deck
+from components.level import Level
 from entity import Actor, Item
 import cards_factory
 import copy
@@ -14,6 +15,7 @@ player = Actor(
     ai_cls=HostileEnemy,
     fighter=Fighter(hp=30, defense=2, power=5),
     inventory=Inventory(capacity=26),
+    level=Level(level_up_base=200),
     card_handler=(
         Deck(cards_factory.starter_deck),
         CardZone(),
@@ -26,7 +28,8 @@ orc = Actor(
     name="Orc",
     ai_cls=BansheeAI,
     fighter=Fighter(hp=10, defense=0, power=3),
-    inventory=Inventory(capacity=0)
+    inventory=Inventory(capacity=0),
+    level=Level(xp_given=35)
     )
 troll = Actor(
     char="T",
@@ -34,7 +37,8 @@ troll = Actor(
     name="Troll",
     ai_cls=HostileEnemy,
     fighter=Fighter(hp=16, defense=1, power=4),
-    inventory=Inventory(capacity=0)
+    inventory=Inventory(capacity=0),
+    level=Level(xp_given=100)
     )
 
 confusion_scroll = Item(

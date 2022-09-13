@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from components.inventory import Inventory
     from game_map import GameMap
     from components.card_zone import CardZone, Deck
+    from components.level import Level
     from card_effects import CardEffect
 
 T = TypeVar("T", bound="Entity")
@@ -85,6 +86,7 @@ class Actor(Entity):
         ai_cls: Type[BaseAI],
         fighter: Fighter,
         inventory: Inventory,
+        level: Level,
         card_handler: Optional[Tuple[Deck, CardZone, CardZone]] = None,
     ):
         super().__init__(
@@ -104,6 +106,9 @@ class Actor(Entity):
 
         self.inventory = inventory
         self.inventory.parent = self
+
+        self.level = level
+        self.level.parent = self
 
         if card_handler:
             for zone in card_handler:
