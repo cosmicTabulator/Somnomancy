@@ -11,7 +11,7 @@ import setup_game
 by cosmicTabulator
 '''
 
-VERSION = "v0.2.0"
+VERSION = "v0.1.0"
 
 def save_game(handler: input_handler.BaseEventHandler, filename: str) -> None:
     if isinstance(handler, input_handler.EventHandler):

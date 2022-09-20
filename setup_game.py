@@ -24,7 +24,7 @@ def new_game() -> Engine:
 
     room_max_size = 10
     room_min_size = 6
-    max_rooms = 30
+    max_rooms = 50
 
     max_monsters_per_room = 2
     max_items_per_room = 2

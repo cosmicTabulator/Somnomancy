@@ -87,11 +87,14 @@ class GameMap:
         return 0 <= x < self.width and 0 <= y < self.height
 
     def render(self, console: Console, x: int, y: int, width: int, height: int) -> None:
+        '''
         viewmap = np.select(
             condlist=[self.visible, self.explored],
             choicelist=[self.tiles["light"], self.tiles["dark"]],
             default=tile_types.SHROUD
         )
+        '''
+        viewmap = self.tiles["light"]
         viewslice = self.get_centered_map_slice(width=width, height=height, map=viewmap)
         console.tiles_rgb[x:(x+width), y:(y+height)] = viewslice
 
