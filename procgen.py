@@ -14,17 +14,28 @@ import entities_factory
 if TYPE_CHECKING:
     from engine import Engine
 
+class Directions(Enum):
 
-N = (0, -1)
-S = (0, 1)
-E = (1, 0)
-W = (-1, 0)
+    N = 0
+    E = 1
+    S = 2
+    W = 3
 
-directions = [N, S, E, W]
+    def rot(self, times=1):
+        return Directions((self.value + times) % 4)
 
-class Tiles(Enum):
-    Wall = auto()
-    Floor = auto()
+    def flip(self):
+        return self.rot(times=2)
+
+    def to_delta(self):
+        if self.value == 0:
+            return (0, -1)
+        elif self.value == 1:
+            return (1, 0)
+        elif self.value == 2:
+            return (0, 1)
+        else:
+            return (-1, 0)
 
 class RectangularRoom:
     def __init__(self, x: int, y: int, width: int, height: int):
@@ -44,6 +55,10 @@ class RectangularRoom:
     def inner(self) -> Tuple[slice,slice]:
         return slice(self.x1, self.x2), slice(self.y1, self.y2)
 
+    @property
+    def outer(self) -> Tuple[slice,slice]:
+        return slice(self.x1-1, self.x2+1), slice(self.y1-1, self.y2+1)
+
     def intersects(self, other: RectangularRoom) -> bool:
         return (
             self.x1 <= other.x2
@@ -51,6 +66,165 @@ class RectangularRoom:
             and self.y1 <= other.y2
             and self.y2 >= other.y1
         )
+
+    def in_bounds(self, map_width: int, map_height: int) -> bool:
+        return (
+            self.x1 > 1
+            and self.x2 < map_width-1
+            and self.y1 > 1
+            and self.y2 < map_height-1
+        )
+
+def get_adjacent(x, y, width, height):
+    adjacent = []
+    if x+1 < width:
+        adjacent.append((x+1, y))
+    if x-1 >= 0:
+        adjacent.append((x-1, y))
+    if y+1 < height:
+        adjacent.append((x, y+1))
+    if y-1 >= 0:
+        adjacent.append((x, y-1))
+    return adjacent
+
+MAX_VAL = 999999
+
+def djikstra_fill(map, source):
+    d_map = np.full(map.shape, fill_value=MAX_VAL, order="F")
+    width, height = map.shape
+    d_map[source] = 0
+    changes = True
+    while True:
+        changes = False
+        for i in range(width):
+            for j in range(height):
+                if map[i, j]:
+                    adjacent = get_adjacent(i, j, width, height)
+                    val = d_map[i, j]
+                    for tile in adjacent:
+                        val = min(val, d_map[tile]+1)
+                    if val < d_map[i, j]:
+                        d_map[i, j] = val
+                        changes = True
+        if not changes:
+            break
+
+    return d_map
+
+def path(map, start, finish):
+    start_x, start_y = start
+    finish_x, finish_y = finish
+
+    x, y = start
+
+    path = [(x, y)]
+    d_map = djikstra_fill(map, finish)
+
+    while path[-1] != finish:
+        x, y = path[-1]
+        adjacent = get_adjacent(x, y, *map.shape)
+        val = d_map[x, y]
+        for tile in adjacent:
+            val = min(val, d_map[tile])
+        lowest_tiles = [tile for tile in adjacent if d_map[tile] == val]
+        path.append(random.choice(lowest_tiles))
+
+    return path
+
+def in_bounds(x : int, y : int, width : int, height : int) -> bool:
+    return (x >= 0 and x < width and y >= 0 and y < height)
+
+def clear_path(x : int, y : int, dir : Directions, step_size : int, map : GameMap) -> bool:
+    dx, dy = dir.to_delta()
+    for i in range(1, step_size+1):
+        if map.tiles[x+i*dx, y+i*dy] != tile_types.wall:
+            return False
+    return True
+
+class Tunneler:
+    def __init__(self, start, lifespan, start_dir, step_size, turn_prob):
+        self.x, self.y = start
+        self.lifespan = lifespan
+        self.dir = start_dir
+        self.step_size = step_size
+        self.turn_prob = turn_prob
+        self.room_prob = 0.6
+        self.branch_prob = 0.3
+        self.children = []
+
+    def update(self, map):
+        width, height = map.width, map.height
+        if random.random() < self.turn_prob:
+            s = random.randint(0, 1)
+            self.dir = self.dir.rot(2*s - 1)
+        dx, dy = self.dir.to_delta()
+        end_x, end_y = self.x+self.step_size*dx, self.y+self.step_size*dy
+        if (
+            in_bounds(x=end_x, y=end_y, width=map.width, height=map.height)
+            and clear_path(self.x, self.y, self.dir, self.step_size, map)
+        ):
+            for i in range(1, self.step_size+1):
+                if random.random() < self.room_prob:
+                    s = random.randint(0, 1)
+                    self.children.append(Builder(
+                        x=self.x+i*dx,
+                        y=self.y+i*dy,
+                        dir=self.dir.rot(2*s - 1),
+                        room_min_size=6,
+                        room_max_size=10
+                    ))
+                if random.random() < self.branch_prob:
+                    s = random.randint(0, 1)
+                    self.children.append(Tunneler(
+                        start=(self.x+i*dx, self.y+i*dy),
+                        lifespan=5,
+                        start_dir=self.dir.rot(2*s-1),
+                        step_size=self.step_size,
+                        turn_prob=self.turn_prob
+                        ))
+                map.tiles[self.x+i*dx, self.y+i*dy] = tile_types.floor
+            self.x, self.y = end_x, end_y
+            self.lifespan -= 1
+            if self.lifespan == 0:
+                for dir in [dir for dir in Directions if dir != self.dir]:
+                    if random.random() < self.branch_prob:
+                        self.children.append(Tunneler(
+                            start=(self.x+i*dx, self.y+i*dy),
+                            lifespan=5,
+                            start_dir=dir,
+                            step_size=self.step_size,
+                            turn_prob=self.turn_prob
+                            ))
+        else:
+            self.lifespan = 0
+
+class Builder:
+    def __init__(self, x: int, y : int, dir : Directions, room_min_size: int, room_max_size : int) -> None:
+        self.x, self.y = x, y
+        self.dir = dir
+        self.lifespan = 1
+        self.children = []
+        self.room_min_size = room_min_size
+        self.room_max_size = room_max_size
+
+    def update(self, map) -> None:
+        candidates = []
+        room_width = random.randint(self.room_min_size, self.room_max_size)
+        room_height = random.randint(self.room_min_size, self.room_max_size)
+        dx, dy = self.dir.to_delta()
+        shift = random.randint(0, room_width*abs(dy) + room_height*abs(dx))
+        room = RectangularRoom(
+            x=self.x+(room_width+1)*dx-shift*abs(dy),
+            y=self.y+(room_height+1)*dy-shift*abs(dx),
+            width=room_width,
+            height=room_height)
+        if room.in_bounds(map_width=map.width, map_height=map.height):
+            if np.all(map.tiles[room.outer] == tile_types.wall):
+                map.tiles[room.inner] = tile_types.floor
+                map.tiles[self.x+dx, self.y+dy] = tile_types.door
+                place_entities(room, map, 2, 2)
+                #rooms.append(room)
+        self.lifespan = 0
 
 def generate_dungeon(
     max_rooms:int,
@@ -65,87 +239,38 @@ def generate_dungeon(
 
     player = engine.player
     dungeon = GameMap(engine, map_width, map_height, entities=[player])
-    map = np.full((map_width, map_height), fill_value=Tiles.Wall, order="F")
-
-    regions = np.full((map_width, map_height), fill_value=0, order="F")
-
-    region = 0
 
     rooms: List[RectangularRoom] = []
 
-    corridors: List[List[Tuple[int, int]]] = []
+    dungeon.tiles[map_width//2, map_height//2] = tile_types.floor
+    player.place(map_width//2, map_height//2, dungeon)
 
-    for r in range(max_rooms):
+    tunnelers = [Tunneler(
+        start=(map_width//2, map_height//2),
+        lifespan=5,
+        start_dir=Directions.N,
+        step_size=7,
+        turn_prob=0.5
+    )]
 
-        #Math to ensure rooms line up with maze grid
+    dead = []
+    children = []
 
-        room_width = 2*random.randint(math.floor(room_min_size/2), math.floor(room_max_size/2))+1
-        room_height = 2*random.randint(math.floor(room_min_size/2), math.floor(room_max_size/2))+1
+    number_generations = 10
 
-        x = 2*random.randint(0, math.floor((dungeon.width - room_width - 1)/2))
-        y = 2*random.randint(0, math.floor((dungeon.height - room_height - 1)/2))
-
-        new_room = RectangularRoom(x, y, room_width, room_height)
-
-        if any(new_room.intersects(other_room) for other_room in rooms):
-            continue
-
-        region += 1
-        map[new_room.inner] = Tiles.Floor
-        regions[new_room.inner] = region
-
-        if len(rooms) == 0:
-            player.place(*new_room.center, dungeon)
-
-        place_entities(new_room, dungeon, max_monsters_per_room, max_items_per_room)
-
-        rooms.append(new_room)
-
-    for i in range(0, map_width, 2):
-        for j in range(0, map_height, 2):
-            if adjacencies(i, j, map) == 0:
-                region += 1
-                corridors.append(maze_fill(i, j, map))
-                for tile in corridors[-1]:
-                    regions[tile] = region
-                    map[tile] = Tiles.Floor
-
-    connections = {}
-    for i in range(0, map_width):
-        for j in range(0, map_height):
-            if map[i, j] != Tiles.Floor:
-                adjacent_regions = []
-                for direction in get_adjacent_grid(i, j, map_width, map_height):
-                    if regions[i+direction[0], j+direction[1]] not in adjacent_regions and regions[i+direction[0], j+direction[1]] > 0:
-                        adjacent_regions.append(regions[i+direction[0], j+direction[1]])
-                if len(adjacent_regions) > 1:
-                    connections[(i, j)] = adjacent_regions
-
-    merged = []
-
-
-    while len(merged) != region:
-        connection_keys = list(connections.keys())
-        door = random.choice(connection_keys)
-        map[door] = Tiles.Floor
-        merged_regions = connections[door]
-        for r in merged_regions:
-            if r not in merged:
-                merged.append(r)
-        for pair in list(connections.items()):
-            if pair[1][0] in merged and pair[1][1] in merged:
-                connections.pop(pair[0])
-                if random.randint(0, 50) == 0:
-                    map[pair[0]] = Tiles.Floor
-
-    for corridor in corridors:
-        while shrink_dead_ends(corridor, map):
-            pass
-
-    for i in range(map_width):
-        for j in range(map_height):
-            if map[i, j] == Tiles.Floor:
-                dungeon.tiles[i, j] = tile_types.floor
+    for i in range(number_generations):
+        while tunnelers:
+            for t in tunnelers:
+                t.update(dungeon)
+                if t.lifespan == 0:
+                    dead.append(t)
+            for t in dead:
+                tunnelers.remove(t)
+                children += t.children
+            dead = []
+        for child in children:
+            tunnelers.append(child)
+        children = []
 
     return dungeon
 
@@ -177,56 +302,3 @@ def place_entities(room: RectangularRoom, dungeon: GameMap, max_monsters: int, m
                 entities_factory.confusion_scroll.spawn(dungeon, x, y)
             else:
                 entities_factory.lightning_scroll.spawn(dungeon, x, y)
-
-def adjacencies(x: int, y: int, map: np.ndarray) -> int:
-    adjacencies = 0
-    directions = get_adjacent_grid(x, y, map.shape[0], map.shape[1])
-    for dir in directions:
-        if map[x+dir[0], y+dir[1]] == Tiles.Floor:
-            adjacencies += 1
-    return adjacencies
-
-def get_adjacent_grid(x: int, y: int, width: int, height: int, range: int = 1) -> List[Tuple[int, int]]:
-    adjacent = []
-    if x <= width - 1 - range:
-        adjacent.append(E)
-    if x >= 0+range:
-        adjacent.append(W)
-    if y <= height - 1 - range:
-        adjacent.append(S)
-    if y >= 0+range:
-        adjacent.append(N)
-    return adjacent
-
-def maze_fill(x: int, y:int, map: np.ndarray) -> List[Tuple[int, int]]:
-    maze = [(x, y)]
-    tracker = [(x, y)]
-    while len(tracker) > 0:
-        i, j = tracker[-1]
-        adjacent = get_adjacent_grid(i, j, map.shape[0], map.shape[1], range=2)
-        filled_adjacencies = []
-        for tile in adjacent:
-            if map[i+(2*tile[0]), j+(2*tile[1])] == Tiles.Floor:
-                filled_adjacencies.append(tile)
-        for tile in filled_adjacencies:
-            adjacent.remove(tile)
-        if len(adjacent) == 0:
-            tracker.pop(-1)
-            continue
-        random.shuffle(adjacent)
-        direction = adjacent[0]
-        maze.append((i+direction[0], j+direction[1]))
-        map[maze[-1]] = Tiles.Floor
-        maze.append((i+2*direction[0], j+2*direction[1]))
-        map[maze[-1]] = Tiles.Floor
-        tracker.append((i+2*direction[0], j+2*direction[1]))
-
-    return maze
-
-def shrink_dead_ends(corridor: List[Tuple[int]], map: np.ndarray) -> bool:
-    for tile in corridor:
-        if adjacencies(*tile, map) < 2:
-            corridor.remove(tile)
-            map[tile] = Tiles.Wall
-            return True
-    return False
