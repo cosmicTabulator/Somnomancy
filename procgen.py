@@ -151,11 +151,16 @@ def in_bounds(x : int, y : int, width : int, height : int) -> bool:
 def clear_path(x : int, y : int, dir : Directions, step_size : int, map : GameMap) -> bool:
     width, height = map.width, map.height
     dx, dy = dir.to_delta()
-    if not in_bounds(x=x+step_size*dx, y=y+step_size*dy, width=width, height=height):
+    width = 1
+    try:
+        for i in range(1, step_size+1):
+            for j in range(-width, width+1):
+                if map.tiles[x+i*dx+j*dy, y+i*dy+j*dx] != tile_types.wall:
+                    return False
+                if x+i*dx+j*dy < 0 or y+i*dy+j*dx < 0:
+                    return False
+    except:
         return False
-    for i in range(1, step_size+1):
-        if map.tiles[x+i*dx, y+i*dy] != tile_types.wall:
-            return False
     return True
 
 class Tunneler:
@@ -167,7 +172,7 @@ class Tunneler:
         self.max_step_size = max_step_size
         self.turn_prob = turn_prob
         self.room_prob = 0.2
-        self.branch_prob = 0.5
+        self.branch_prob = 0.2
         self.children = []
 
     def update(self, map):
@@ -202,8 +207,7 @@ class Tunneler:
                     room_max_size=10
                 ))
             map.tiles[self.x+i*dx, self.y+i*dy] = tile_types.floor
-        end_x, end_y = self.x+step_size*dx, self.y+step_size*dy
-        self.x, self.y = end_x, end_y
+        self.x, self.y = self.x+step_size*dx, self.y+step_size*dy
         self.lifespan -= 1
         if random.random() < self.branch_prob:
             dir=random.choice([dir for dir in Directions if dir != self.dir.flip()])
