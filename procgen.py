@@ -75,6 +75,20 @@ class RectangularRoom:
             and self.y2 < map_height-1
         )
 
+    def get_possible_doors(self, map: GameMap) -> List[Tuple[int, int]]:
+        locations = []
+        for i in range(self.x2 - self.x1):
+            if map.tiles[self.x1+i, self.y1-1] == tile_types.wall and map.tiles[self.x1+i, self.y1-2] == tile_types.floor:
+                locations.append((self.x1+i, self.y1-1))
+            if map.tiles[self.x1+i, self.y2] == tile_types.wall and map.tiles[self.x1+i, self.y2+1] == tile_types.floor:
+                locations.append((self.x1+i, self.y2))
+        for j in range(self.y2 - self.y1):
+            if map.tiles[self.x1-1, self.y1+j] == tile_types.wall and map.tiles[self.x1-2, self.y1+j] == tile_types.floor:
+                locations.append((self.x1-1, self.y1+j))
+            if map.tiles[self.x2, self.y1+j] == tile_types.wall and map.tiles[self.x2+1, self.y1+j] == tile_types.floor:
+                locations.append((self.x2, self.y1+j))
+        return locations
+
 def get_adjacent(x, y, width, height):
     adjacent = []
     if x+1 < width:
@@ -135,7 +149,10 @@ def in_bounds(x : int, y : int, width : int, height : int) -> bool:
     return (x >= 0 and x < width and y >= 0 and y < height)
 
 def clear_path(x : int, y : int, dir : Directions, step_size : int, map : GameMap) -> bool:
+    width, height = map.width, map.height
     dx, dy = dir.to_delta()
+    if not in_bounds(x=x+step_size*dx, y=y+step_size*dy, width=width, height=height):
+        return False
     for i in range(1, step_size+1):
         if map.tiles[x+i*dx, y+i*dy] != tile_types.wall:
             return False
@@ -148,83 +165,121 @@ class Tunneler:
         self.dir = start_dir
         self.step_size = step_size
         self.turn_prob = turn_prob
-        self.room_prob = 0.6
-        self.branch_prob = 0.3
+        self.room_prob = 0.2
+        self.branch_prob = 0.5
         self.children = []
 
     def update(self, map):
         width, height = map.width, map.height
+        outgoing = [dir for dir in Directions if dir != self.dir.flip()]
         if random.random() < self.turn_prob:
             s = random.randint(0, 1)
             self.dir = self.dir.rot(2*s - 1)
+        outgoing.remove(self.dir)
+        random.shuffle(outgoing)
         dx, dy = self.dir.to_delta()
-        end_x, end_y = self.x+self.step_size*dx, self.y+self.step_size*dy
-        if (
-            in_bounds(x=end_x, y=end_y, width=map.width, height=map.height)
-            and clear_path(self.x, self.y, self.dir, self.step_size, map)
-        ):
-            for i in range(1, self.step_size+1):
-                if random.random() < self.room_prob:
-                    s = random.randint(0, 1)
-                    self.children.append(Builder(
-                        x=self.x+i*dx,
-                        y=self.y+i*dy,
-                        dir=self.dir.rot(2*s - 1),
-                        room_min_size=6,
-                        room_max_size=10
-                    ))
-                if random.random() < self.branch_prob:
-                    s = random.randint(0, 1)
-                    self.children.append(Tunneler(
-                        start=(self.x+i*dx, self.y+i*dy),
-                        lifespan=5,
-                        start_dir=self.dir.rot(2*s-1),
-                        step_size=self.step_size,
-                        turn_prob=self.turn_prob
-                        ))
-                map.tiles[self.x+i*dx, self.y+i*dy] = tile_types.floor
-            self.x, self.y = end_x, end_y
-            self.lifespan -= 1
-            if self.lifespan == 0:
-                for dir in [dir for dir in Directions if dir != self.dir]:
-                    if random.random() < self.branch_prob:
-                        self.children.append(Tunneler(
-                            start=(self.x+i*dx, self.y+i*dy),
-                            lifespan=5,
-                            start_dir=dir,
-                            step_size=self.step_size,
-                            turn_prob=self.turn_prob
-                            ))
+        if clear_path(self.x, self.y, self.dir, self.step_size, map):
+            self.make_corridor(dx=dx, dy=dy, map=map)
+        elif clear_path(self.x, self.y, outgoing[0], self.step_size, map):
+            dx, dy = outgoing[0].to_delta()
+            self.make_corridor(dx=dx, dy=dy, map=map)
+        elif clear_path(self.x, self.y, outgoing[1], self.step_size, map):
+            dx, dy = outgoing[1].to_delta()
+            self.make_corridor(dx=dx, dy=dy, map=map)
         else:
             self.lifespan = 0
 
+    def make_corridor(self, dx : int, dy : int, map : GameMap) -> None:
+        for i in range(1, self.step_size+1):
+            if random.random() < self.room_prob:
+                s = random.randint(0, 1)
+                self.children.append(Builder(
+                    x=self.x+i*dx,
+                    y=self.y+i*dy,
+                    room_min_size=6,
+                    room_max_size=10
+                ))
+            map.tiles[self.x+i*dx, self.y+i*dy] = tile_types.floor
+        end_x, end_y = self.x+self.step_size*dx, self.y+self.step_size*dy
+        self.x, self.y = end_x, end_y
+        self.lifespan -= 1
+        if self.lifespan == 0:
+            for dir in [dir for dir in Directions if dir != self.dir]:
+                if random.random() < self.branch_prob:
+                    self.children.append(Tunneler(
+                        start=(self.x, self.y),
+                        lifespan=5,
+                        start_dir=dir,
+                        step_size=self.step_size,
+                        turn_prob=self.turn_prob
+                        ))
+
 class Builder:
-    def __init__(self, x: int, y : int, dir : Directions, room_min_size: int, room_max_size : int) -> None:
+    def __init__(self, x: int, y : int, room_min_size: int, room_max_size : int) -> None:
         self.x, self.y = x, y
-        self.dir = dir
         self.lifespan = 1
         self.children = []
         self.room_min_size = room_min_size
         self.room_max_size = room_max_size
 
     def update(self, map) -> None:
-        candidates = []
         room_width = random.randint(self.room_min_size, self.room_max_size)
         room_height = random.randint(self.room_min_size, self.room_max_size)
-        dx, dy = self.dir.to_delta()
-        shift = random.randint(0, room_width*abs(dy) + room_height*abs(dx))
-        room = RectangularRoom(
-            x=self.x+(room_width+1)*dx-shift*abs(dy),
-            y=self.y+(room_height+1)*dy-shift*abs(dx),
-            width=room_width,
-            height=room_height)
-        if room.in_bounds(map_width=map.width, map_height=map.height):
-            if np.all(map.tiles[room.outer] == tile_types.wall):
-                map.tiles[room.inner] = tile_types.floor
-                map.tiles[self.x+dx, self.y+dy] = tile_types.door
-                place_entities(room, map, 2, 2)
-                #rooms.append(room)
+        candidates = self.scan(width=room_width, height=room_height, map=map)
+        if candidates:
+            room = random.choice(candidates)
+            map.tiles[room.inner] = tile_types.floor
+            map.tiles[random.choice(room.get_possible_doors(map))] = tile_types.door
+            place_entities(room, map, 2, 2)
+            #rooms.append(room)
         self.lifespan = 0
+
+    def scan(self, width : int, height : int, map : GameMap) -> List[RectangularRoom]:
+        open_locations = []
+        for i in range(0, width):
+            open_locations += self.test_room(
+                width=width,
+                height=height,
+                x=self.x-i,
+                y=self.y-height-1,
+                map=map
+            )
+            open_locations += self.test_room(
+                width=width,
+                height=height,
+                x=self.x-i,
+                y=self.y+2,
+                map=map
+            )
+        for j in range(0, height):
+            open_locations += self.test_room(
+                width=width,
+                height=height,
+                x=self.x-width-1,
+                y=self.y-j,
+                map=map
+            )
+            open_locations += self.test_room(
+                width=width,
+                height=height,
+                x=self.x+2,
+                y=self.y-j,
+                map=map
+            )
+        return open_locations
+
+    def test_room(self, width: int, height: int, x: int, y: int, map: GameMap) -> List[RectangularRoom]:
+        test_room = RectangularRoom(
+            x=x,
+            y=y,
+            width=width,
+            height=height
+        )
+        if test_room.in_bounds(map_width=map.width, map_height=map.height):
+            if np.all(map.tiles[test_room.outer] == tile_types.wall):
+                if test_room.get_possible_doors(map):
+                    return [test_room]
+        return []
 
 def generate_dungeon(
     max_rooms:int,
@@ -256,7 +311,7 @@ def generate_dungeon(
     dead = []
     children = []
 
-    number_generations = 10
+    number_generations = 8
 
     for i in range(number_generations):
         while tunnelers:

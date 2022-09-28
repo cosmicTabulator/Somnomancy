@@ -20,7 +20,7 @@ background_image = tcod.image.load("assets/backgrounds/menu_background.png")[:, 
 
 def new_game() -> Engine:
     map_width = 80
-    map_height = 40
+    map_height = 80
 
     room_max_size = 10
     room_min_size = 6
