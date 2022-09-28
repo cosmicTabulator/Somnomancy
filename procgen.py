@@ -159,11 +159,12 @@ def clear_path(x : int, y : int, dir : Directions, step_size : int, map : GameMa
     return True
 
 class Tunneler:
-    def __init__(self, start, lifespan, start_dir, step_size, turn_prob):
+    def __init__(self, start, lifespan, start_dir, min_step_size, max_step_size, turn_prob):
         self.x, self.y = start
         self.lifespan = lifespan
         self.dir = start_dir
-        self.step_size = step_size
+        self.min_step_size = min_step_size
+        self.max_step_size = max_step_size
         self.turn_prob = turn_prob
         self.room_prob = 0.2
         self.branch_prob = 0.5
@@ -171,6 +172,7 @@ class Tunneler:
 
     def update(self, map):
         width, height = map.width, map.height
+        step_size = random.randint(self.min_step_size, self.max_step_size)
         outgoing = [dir for dir in Directions if dir != self.dir.flip()]
         if random.random() < self.turn_prob:
             s = random.randint(0, 1)
@@ -178,19 +180,19 @@ class Tunneler:
         outgoing.remove(self.dir)
         random.shuffle(outgoing)
         dx, dy = self.dir.to_delta()
-        if clear_path(self.x, self.y, self.dir, self.step_size, map):
-            self.make_corridor(dx=dx, dy=dy, map=map)
-        elif clear_path(self.x, self.y, outgoing[0], self.step_size, map):
+        if clear_path(self.x, self.y, self.dir, step_size, map):
+            self.make_corridor(dx=dx, dy=dy, step_size=step_size, map=map)
+        elif clear_path(self.x, self.y, outgoing[0], step_size, map):
             dx, dy = outgoing[0].to_delta()
-            self.make_corridor(dx=dx, dy=dy, map=map)
-        elif clear_path(self.x, self.y, outgoing[1], self.step_size, map):
+            self.make_corridor(dx=dx, dy=dy, step_size=step_size, map=map)
+        elif clear_path(self.x, self.y, outgoing[1], step_size, map):
             dx, dy = outgoing[1].to_delta()
-            self.make_corridor(dx=dx, dy=dy, map=map)
+            self.make_corridor(dx=dx, dy=dy, step_size=step_size, map=map)
         else:
             self.lifespan = 0
 
-    def make_corridor(self, dx : int, dy : int, map : GameMap) -> None:
-        for i in range(1, self.step_size+1):
+    def make_corridor(self, dx : int, dy : int, step_size: int, map : GameMap) -> None:
+        for i in range(1, step_size+1):
             if random.random() < self.room_prob:
                 s = random.randint(0, 1)
                 self.children.append(Builder(
@@ -200,19 +202,19 @@ class Tunneler:
                     room_max_size=10
                 ))
             map.tiles[self.x+i*dx, self.y+i*dy] = tile_types.floor
-        end_x, end_y = self.x+self.step_size*dx, self.y+self.step_size*dy
+        end_x, end_y = self.x+step_size*dx, self.y+step_size*dy
         self.x, self.y = end_x, end_y
         self.lifespan -= 1
-        if self.lifespan == 0:
-            for dir in [dir for dir in Directions if dir != self.dir]:
-                if random.random() < self.branch_prob:
-                    self.children.append(Tunneler(
-                        start=(self.x, self.y),
-                        lifespan=5,
-                        start_dir=dir,
-                        step_size=self.step_size,
-                        turn_prob=self.turn_prob
-                        ))
+        if random.random() < self.branch_prob:
+            dir=random.choice([dir for dir in Directions if dir != self.dir.flip()])
+            self.children.append(Tunneler(
+                start=(self.x, self.y),
+                lifespan=5,
+                start_dir=dir,
+                min_step_size=self.min_step_size,
+                max_step_size=self.max_step_size,
+                turn_prob=self.turn_prob
+            ))
 
 class Builder:
     def __init__(self, x: int, y : int, room_min_size: int, room_max_size : int) -> None:
@@ -304,7 +306,8 @@ def generate_dungeon(
         start=(map_width//2, map_height//2),
         lifespan=5,
         start_dir=Directions.N,
-        step_size=7,
+        min_step_size=4,
+        max_step_size=7,
         turn_prob=0.5
     )]
 
