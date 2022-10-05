@@ -1,5 +1,21 @@
 <config>
+  <level width="" height="" min_rooms="" max_rooms=""/>
   <features>
     <prefab filepath="" definition="" symmetry="" weight=""/>
+    <prefab filepath="" definition="" symmetry="" weight=""/>
+    <prefab filepath="" definition="" symmetry="" weight=""/>
+    <prefab filepath="" definition="" symmetry="" weight=""/>
+    <prefab filepath="" definition="" symmetry="" weight=""/>
   </features>
+  <start x="" y="">
+    <prefab filepath="" definition="" symmetry="" weight=""/>
+    <prefab filepath="" definition="" symmetry="" weight=""/>
+  </start>
+  <end>
+    <prefab filepath="" definition="" symmetry="" weight=""/>
+    <prefab filepath="" definition="" symmetry="" weight=""/>
+  </end>
+  <require>
+    <prefab filepath="" definition="" symmetry="" count=""/>
+  </require>
 </config>
