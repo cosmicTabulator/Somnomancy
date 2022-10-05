@@ -1,0 +1,7 @@
+<definition>
+  <mappings>
+    <replace symbol="A" type="Entity" tag="Orc" chance="0.25"/>
+  </mappings>
+  <randomizations>
+  </randomizations>
+</definition>
