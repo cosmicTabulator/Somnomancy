@@ -1,7 +1,14 @@
+from __future__ import annotations, TYPE_CHECKING
+
+import random
+
 import numpy as np
 
 import tile_types
 from generator.generator_tools import Directions
+
+if TYPE_CHECKING:
+    from game_map import GameMap
 
 class Prefab:
     def __init__(self, definition, tiledata=None, tilemap=None):
@@ -39,7 +46,7 @@ class Prefab:
 
         self.update_connectors(connector_loc=connector_loc)
 
-    def update_connectors(self, connector_loc, clear=False):
+    def update_connectors(self, connector_loc, clear=False) -> None:
         if clear:
             self.connectors = []
         for connector in connector_loc:
@@ -53,8 +60,26 @@ class Prefab:
             elif self.tiles[x, y-1] == tile_types.floor:
                 self.connectors.append(connector, Directions.S)
 
-    def check_match(self, x: int, y: int, map: np.ndarray) -> bool:
-        map_slice = map[x:self.width+x, y:self.height+y]
+    def place(self, x: int, y: int, map: GameMap) -> None:
+        map.tiles[x:self.width+x, y:self.height+y] = self.tiles
+
+    def translate_connectors(self, x: int, y: int):
+        translated = [((connector[0][0]+x, connector[0][1]+y), connector[1]) for connector in self.connectors]
+        return translated
+
+    def get_connector_facing(self, dir: Directions):
+        random.shuffle(self.connectors)
+        for connector in self.connectors:
+            if connector[1] == dir:
+                return connector
+
+        return None
+
+    def check_match(self, x: int, y: int, map: GameMap) -> bool:
+        map_width, map_height = map.shape
+        if x+self.width>map_width or x<0 or y+self.height>map_height or y<0:
+            return False
+        map_slice = map.tiles[x:self.width+x, y:self.height+y]
         for i in range(width):
             for j in range(height):
                 if self.tiles[i, j] != None and self.tiles[i, j] != map_slice[i, j]:

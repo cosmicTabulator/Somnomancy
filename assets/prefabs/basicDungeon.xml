@@ -1,9 +1,9 @@
 <config>
   <!-- Defines level parameters -->
   <!-- max_rooms is number of room placement attempts, generator resets if min_rooms isn't met-->
-  <level width="" height="" min_rooms="" max_rooms=""/>
+  <level width="80" height="80" min_rooms="10" max_rooms="25"/>
   <!-- Adds #count rectangular rooms to the pool, each with #doors doors-->
-  <rectangular width="" height="" count="" doors="" />
+  <rectangular width="6-10" height="6-10" count="20" doors="2-6"/>
   <!-- Defines the prefab room pool-->
   <features>
     <prefab filepath="" definition="" symmetry="" weight=""/>
@@ -13,7 +13,7 @@
     <prefab filepath="" definition="" symmetry="" weight=""/>
   </features>
   <!-- Defines the starting room pool-->
-  <start x="" y="">
+  <start x="35-45" y="35-45">
     <prefab filepath="" definition="" symmetry="" weight=""/>
     <prefab filepath="" definition="" symmetry="" weight=""/>
   </start>
